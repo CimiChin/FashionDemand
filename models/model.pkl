@@ -1,1 +1,27 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+import pickle
+
+df = pd.read_csv('data/Retail_Inventory_Data.csv')
+df['Order_Demand'] = df['Order_Demand'].apply(lambda x: -int(x) if '-' in x else int(x))
+df['high_demand'] = df['Order_Demand'].apply(lambda x: 1 if x > df['Order_Demand'].median() else 0)
+
+df.drop(['Order_Demand', 'Date'], axis=1, inplace=True)
+df.fillna('unknown', inplace=True)
+
+from sklearn.preprocessing import LabelEncoder
+for col in df.select_dtypes(include='object').columns:
+    df[col] = LabelEncoder().fit_transform(df[col])
+
+X = df.drop('high_demand', axis=1)
+y = df['high_demand']
+
+X_train, _, y_train, _ = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = GaussianNB()
+model.fit(X_train, y_train)
+
+with open('models/model.pkl', 'wb') as file:
+    pickle.dump(model, file)
 
